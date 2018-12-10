@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+  <!-- jQuery library -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+  <!-- Latest compiled JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <style>
+    .samples {
+      color: white;
+      border-color: black;
+      display: inline-block;
+      padding: 15px;
+      border-radius: 10%;
+      border-width: 3px;
+      border-style: dashed;
+    }
+
+    .spacer {
+      margin: 5%;
+    }
+
+    .loader {
+
+      width: auto;
+      padding: 0px;
+      margin: 0px;
+      height: 75px;
+    }
+
+
+    #response {
+      min-height: 105px;
+      padding: 0px;
+      margin: 0px;
+      max-height: 115px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container-fluid">
+    <div class="row" id="intro">
+
+
+      <center>
+        <div class="row">
+          <div class="col" id="response">
+            <h2>Neural Network Prediction: </h2>
+            <h2></h2>
+            <img class='loader'>
+          </div>
+
+        </div>
+        <div class="row" id="refresh">
+          <div class="col">
+            <h2>
+          <button type="button" class="btn btn-warning" onclick="location.reload();">Refresh Cell List</button></h2></div>
+        </div>
+        <div class="row" id="demo">
+          <div class="samples col" id="1"> </div>
+          <div class="samples col" id="2"> </div>
+          <div class="samples col" id="3"> </div>
+          <div class="samples col" id="4"> </div>
+          <div class="samples col" id="5"> </div>
+        </div>
+
+
+
+      </center>
+      <div class='jumbotron'>
+        <p>
+          This page connects to a Neural Network which has been trained to distinguish between benign and malignant breast cancer cells based on a set of 9 measured features. The classifier predicts class '0' for benign and class '1' for malignant.
+          <br>
+          <br>Five cell samples have been selected at random for you to test the network with. As a user, you can clearly see which cells are benign and maligant. When the "Test Cell" button is clicked, the Neural Network is fed the 9 measurement features
+          of the cell, but it is NOT told which class the cell belongs to. The network will then return a prediction for which class the cell belongs to (Benign or Malignant).<br>
+        </p>
+        <div class="row">
+          <div class="col note"><code>Note: None of these randomly selected cell records have been shown to the neural network before, which demonstrates the network's ability to create a generalized solution to this classifcation problem.
+Accuracy for the model is at ~98% based on ~700 training records.</code></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col spacer">
+          &nbsp;
+        </div>
+      </div>
+    </div>
+
+
+    <script src="./code.js"></script>
+
+</body>
+
+</html>
