@@ -1,5 +1,5 @@
-# Machine Learning Malignat Cell Classifier with mongoDB
-This project is an interactive applet for a python based neural network which has been trained on ~700 records of benign and malignant tumor cells. It randomly shuffles a deck of cell measurements and display them to the user, who can then pass them through the previously trained network, which attempts to classify each cell as "benign" or "malignant". 
+# Machine Learning Malignat Cell Classifier with Python & mongoDB
+This project is an interactive applet for a python based neural network which has been trained on ~700 records of benign and malignant tumor cells. It randomly shuffles a deck of cell measurements and display them to the user, who can then pass them through the previously trained network, which attempts to classify each cell as "benign" or "malignant". All backend computation and fetching is done via python and mongoDB.
 
 ## Deployed Example
 For a deployed demo, please visit https://theoryofgravity.ca/mongo/cells/ 
