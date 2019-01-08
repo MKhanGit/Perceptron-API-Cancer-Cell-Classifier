@@ -1,16 +1,16 @@
 var iterator=1;
 text.forEach(function(sample){
   document.getElementById(iterator).innerHTML += "Randomly Selected Cell "+ iterator + ": <br>";
-  document.getElementById(iterator).innerHTML += '<button type="button" class="btn btn-primary" onClick=submitCell(' + iterator + ')>Test Cell</button><br/><br/>';
+  document.getElementById(iterator).innerHTML += '<button type="button" class="btn btn-warning" onClick=submitCell(' + iterator + ')>Test Cell</button><br/><br/>';
   for (var key in sample){
     document.getElementById(iterator).innerHTML +=key + ": " +sample[key]+"<br>";
   }
   if(text[iterator-1]['class']=='0'){
-    document.getElementById(iterator).style.backgroundColor = "#009432";
+    document.getElementById(iterator).style.backgroundColor = "#27ae60";
     document.getElementById(iterator).innerHTML += "<H2>BENIGN</H2>";}
 
   else{
-    document.getElementById(iterator).style.backgroundColor = "#d63031";
+    document.getElementById(iterator).style.backgroundColor = "#e74c3c";
     document.getElementById(iterator).innerHTML += "<H2>MALIGNANT</H2>";
   }
 
