@@ -1,0 +1,45 @@
+version: "3.9"
+services:
+  perceptron-db-mongo:
+    build: ./db/
+    ports:
+      - "27017:27017"
+    volumes:
+      - api_db_vol:/data/db
+    networks:
+      perceptron_api_net:
+        ipv4_address: 172.15.0.2
+  perceptron-api-flask:
+    build: ./api/
+    ports:
+      - "5000:5000"
+    volumes:
+      - api_bin_vol:/api/bin
+    networks:
+      perceptron_api_net:
+        ipv4_address: 172.15.0.3
+  perceptron-frontend-react:
+    build: ./frontend_cell_classifier/
+    ports:
+      - "3000:3000"
+    volumes:
+      - react_modules_vol:/app/node_modules/
+    networks:
+      perceptron_api_net:
+        ipv4_address: 172.15.0.4
+
+networks:
+  perceptron_api_net:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 172.15.0.0/16
+         gateway: 172.15.0.1
+
+volumes:
+  api_bin_vol:
+    name: "perceptron-binary-data"
+  api_db_vol:
+    name: "perceptron-database"
+  react_modules_vol:
+    name: "perceptron-node-modules"
