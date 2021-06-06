@@ -1,0 +1,8 @@
+{
+  "PERCEPTRON_API_PROTOCOL": "http://",
+  "PERCEPTRON_API_ENDPOINT": ":5000/api/v1/perceptron",
+  "SAMPLES_RETRIEVED": 5,
+  "FEATURES": ["thickness", "size", "shape", "adhesion", "single_size", "nuclei", "chromatin", "nucleoli", "mitoses"],
+  "NEURAL_NETWORK_NAME": "breast_cancer_classifier",
+  "EASE_IN_TIME": 800
+}

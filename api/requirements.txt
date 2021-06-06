@@ -1,0 +1,6 @@
+dill
+flask
+flask-cors
+numpy
+pymongo
+scipy
