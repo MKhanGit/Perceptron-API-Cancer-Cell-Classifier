@@ -30,26 +30,31 @@ function getClassificationFromAPI(features) {
 
 function loadSamplesToState(props) {
     if (props.state.loadingSamples) {
-        getRandomSamplesFromAPI(configData.SAMPLES_RETRIEVED).then(data => {
-            let parsedSampleArray = data.records.map((sample) => {
-                    let sampleArray = Array(configData.FEATURES.length + 1);
-                    for (let i = 0; i < configData.FEATURES.length; i++) {
-                        sampleArray[i] = sample[i]
+        setTimeout(() => {
+            getRandomSamplesFromAPI(configData.SAMPLES_RETRIEVED).then(data => {
+                let parsedSampleArray = data.records.map((sample) => {
+                        let sampleArray = Array(configData.FEATURES.length + 1);
+                        for (let i = 0; i < configData.FEATURES.length; i++) {
+                            sampleArray[i] = sample[i]
+                        }
+                        sampleArray[configData.FEATURES.length] = sample['target_class']
+                        return sampleArray;
                     }
-                    sampleArray[configData.FEATURES.length] = sample['target_class']
-                    return sampleArray;
-                }
-            );
-            props.setState({
-                loadingSamples: false,
-                loadingResponse: false,
-                cellSamples: parsedSampleArray,
-                finished: false,
-                selectedSample: null,
-                targetResponse: null,
-                featuresRequest: Array(configData.FEATURES.length).fill(0.0)
+                );
+                props.setState({
+                    loadingSamples: false,
+                    loadingResponse: false,
+                    cellSamples: parsedSampleArray,
+                    revealedSamples: Array(configData.SAMPLES_RETRIEVED).fill(false),
+                    responseIsCorrect: Array(configData.SAMPLES_RETRIEVED).fill(null),
+                    finished: false,
+                    selectedSample: null,
+                    targetResponse: null,
+                    featuresRequest: Array(configData.FEATURES.length).fill(0.0)
+                });
             });
-        });
+        }, configData.EASE_IN_TIME);
+
     }
 }
 
@@ -127,16 +132,20 @@ function NeuralNetworkResponse(props) {
 
 class Sample extends React.Component {
     render() {
-        let sampleClass = Array(4).fill("");
+        let sampleClass = Array(3).fill("");
 
         sampleClass[0] = 'sample';
-        sampleClass[1] = this.props.sample[configData.FEATURES.length] === "1" ? "malignant" : (this.props.sample[configData.FEATURES.length] === "0" ? "benign" : "loading");
-
+        // sampleClass[1] = this.props.sample[configData.FEATURES.length] === "1" ? "malignant" : (this.props.sample[configData.FEATURES.length] === "0" ? "benign" : "loading");
+        let sampleTarget = this.props.sample[configData.FEATURES.length] === "1" ? "malignant" : (this.props.sample[configData.FEATURES.length] === "0" ? "benign" : "loading");
+        let sampleHeadingClass;
+        let sampleCorrect;
+        let sampleCorrectClass;
         if (this.props.state.selectedSample !== null) {
             if (this.props.state.selectedSample === this.props.index) {
-                sampleClass[2] = "selected-sample";
+                sampleClass[1] = "selected-sample";
                 if (this.props.state.targetResponse !== null) {
-                    sampleClass[3] = "selection-done";
+                    sampleClass[2] = "selection-done";
+                    this.props.state.responseIsCorrect[this.props.index] = (parseInt(this.props.state.targetResponse) === parseInt(this.props.sample[configData.FEATURES.length]));
                 }
             }
         }
@@ -148,10 +157,22 @@ class Sample extends React.Component {
             );
         }, this);
 
+        if (this.props.state.revealedSamples[this.props.index]){
+            sampleHeadingClass = sampleTarget;
+        }
+        else{
+            sampleTarget = (sampleTarget === "loading") ? sampleTarget : "? ? ? "
+        }
+        sampleCorrect = (this.props.state.responseIsCorrect[this.props.index] !==null) ? ( (this.props.state.responseIsCorrect[this.props.index]) ? " \u2713 " : " \u2716 ") : " \xa0 ";
+        sampleCorrectClass = (this.props.state.responseIsCorrect[this.props.index] !==null) ? ( (this.props.state.responseIsCorrect[this.props.index]) ? "benign" : "malignant") : "";
+        console.log(this.props.state.responseIsCorrect[this.props.index]);
         return (
             <button className={sampleClass.join(' ')} onClick={() => this.props.onClick(this.props.index)}>
-                <div className="sample-heading">
-                    <b>{sampleClass[1]}</b>
+                <div className={"sample-heading ".concat(sampleHeadingClass)}>
+                    <b>{sampleTarget}</b>
+                </div>
+                <div className={"check-box ".concat(sampleCorrectClass)}>
+                    <b>{sampleCorrect}</b>
                 </div>
                 {featuresList}
             </button>
@@ -163,12 +184,12 @@ class SampleBoard extends React.Component {
     render() {
         if (this.props.state.loadingSamples) {
             return (
-                <LoadingCells state={this.props.state} onClick={this.props.onClick}/>
+                <LoadingCells state={this.props.state} onClick={this.props.onClick} />
             );
         }
         let samplesList = this.props.state.cellSamples.map(function (sample, index) {
             return (
-                <Sample sample={sample} index={index} key={index} state={this.props.state} onClick={this.props.onClick}/>
+                <Sample sample={sample} index={index} key={index} state={this.props.state} onClick={this.props.onClick} />
             );
 
         }, this);
@@ -246,7 +267,9 @@ class MachineLearningApp extends React.Component {
             cellSamples: null,
             selectedSample: null,
             featuresRequest: Array(configData.FEATURES.length).fill(0.0),
+            revealedSamples: Array(configData.SAMPLES_RETRIEVED).fill(false),
             targetResponse: null,
+            responseIsCorrect: Array(configData.SAMPLES_RETRIEVED).fill(null),
             finished: false
         };
     }
@@ -255,9 +278,17 @@ class MachineLearningApp extends React.Component {
         // Given a valid selection/load state, ping the API with the selected data and receive a response
         if (!this.state.loadingSamples && !this.state.loadingResponse && this.state.selectedSample !== null && !this.state.finished) {
             this.setState({loadingResponse: true});
-            getClassificationFromAPI(this.state.featuresRequest).then(data => {
-                this.setState({lastResponseData: data, targetResponse: data['identified_class'], loadingResponse: false, finished: true});
-            });
+            setTimeout(() => {
+                getClassificationFromAPI(this.state.featuresRequest).then(data => {
+                    this.state.revealedSamples[this.state.selectedSample] = true;
+                    this.setState({
+                        lastResponseData: data,
+                        targetResponse: data['identified_class'],
+                        loadingResponse: false,
+                        finished: true
+                    });
+                });
+            }, configData.EASE_IN_TIME);
         }
     }
 
@@ -289,23 +320,26 @@ class MachineLearningApp extends React.Component {
             return null;
         }
         // Set the App into a loading state and request a new random sample set from the database via an API call
-        this.setState({loadingSamples: true, loadingResponse: true, selectedSample: null, lastResponseData: null});
+        this.setState({loadingSamples: true, loadingResponse: true, selectedSample: null, lastResponseData: null, responseIsCorrect: Array(configData.SAMPLES_RETRIEVED).fill(null)});
         loadSamplesToState(this);
     }
 
     render() {
         loadSamplesToState(this);
         return (
-            <div className="ml-App">
-                <div className="sample-board">
-                    <AppHeader value="Machine Learning App"/>
-                    <AppInfo value={AppInfoP1}/>
-                    <AppInfo value={AppInfoP2}/>
-                    <SampleBoard state={this.state} onClick={(i) => this.sampleClick(i)}/>
-                    <RefreshButton onClick={() => this.refreshSampleList()}/>
-                    <SubmitButton state={this.state} onClick={() => this.submitClick()}/>
-                    <StatusMessage state={this.state}/>
-                    <NeuralNetworkResponse state={this.state}/>
+            <div>
+                <AppHeader value="Machine Learning Cell Classifier"/>
+                <div className="ml-app">
+                    <div className="sample-board">
+                        <AppInfo value={AppInfoP1}/>
+                        <img alt="Perceptron Network" src={process.env.PUBLIC_URL + "logo192.png"} className="app-logo"/>
+                        <AppInfo value={AppInfoP2}/>
+                        <SampleBoard state={this.state} onClick={(i) => this.sampleClick(i)}/>
+                        <RefreshButton onClick={() => this.refreshSampleList()}/>
+                        <SubmitButton state={this.state} onClick={() => this.submitClick()}/>
+                        <StatusMessage state={this.state}/>
+                        <NeuralNetworkResponse state={this.state}/>
+                    </div>
                 </div>
             </div>
         );

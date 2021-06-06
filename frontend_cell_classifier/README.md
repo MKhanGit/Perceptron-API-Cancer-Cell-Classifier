@@ -7,9 +7,7 @@ The user can select any random "measurement card" and query the API with those m
 The app provides clear output classifications from the API (Benign vs Malignant), as well as showing "Raw Network Outputs" corresponding to the AI confidence for each classification.
 
 ## Screenshots
-
-
-
+_under construction_
 ## Deployment 
 Since this project is designed as an ecosystem of micro-services, it would be easiest to run `docker-compose` from the project/repository root:
 
