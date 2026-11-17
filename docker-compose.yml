@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   perceptron-db-mongo:
     build: ./db/
@@ -6,11 +5,20 @@ services:
       - "27017:27017"
     volumes:
       - api_db_vol:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
     networks:
       perceptron_api_net:
         ipv4_address: 172.15.0.2
   perceptron-api-flask:
     build: ./api/
+    depends_on:
+      perceptron-db-mongo:
+        condition: service_healthy
     ports:
       - "5000:5000"
     volumes:

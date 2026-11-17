@@ -8,10 +8,8 @@ from APIHelpers import APIResponseStatus, db_helper, io_helper, cache_helper, de
 from neural_network import NeuralNetwork
 import sample_data.setup_sample_neural_network
 
-# Load API configuration settings
 config_data = io_helper.load_config_data()
 
-# Load MongoDB connection
 records_db = db_helper.DBConnection(config_data['mongo_host'], config_data['mongo_port'],
                                     config_data['mongo_database'],
                                     config_data['data_collection'])
@@ -23,7 +21,6 @@ perceptron_db = db_helper.DBConnection(config_data['mongo_host'], config_data['m
 # Load global cached storage for uncommited NeuralNetwork objects (i.e. data currently being manipulated by users)
 perceptron_cache = cache_helper.GlobalCacheHelper(max_size=int(config_data['flask_cache_max_size']))
 
-# optionally populate the database with sample records and save a trained Perceptron Network to disk
 if config_data['load_sample_network_on_start']:
     sample_data.setup_sample_neural_network.main()
 
@@ -47,15 +44,7 @@ def api_status_check():
 
     :return:
     """
-    resp = {"status": APIResponseStatus.OK.value}
-    status_code = 200
-    try:
-        # TODO: (optional) Perform several internal API functions to verify "sanity checks" here
-        pass
-    except AttributeError and ValueError:
-        resp.update({"status": APIResponseStatus.ERROR.value})
-        status_code = 400
-    return resp, status_code
+    return {"status": APIResponseStatus.OK.value}, 200
 
 
 @app.route('/api/v1/perceptron/records/random', methods=['GET', 'POST'])
@@ -69,7 +58,7 @@ def records_query():
     """
     req_rng = 'random' in flask.request.url_rule.rule
     max_records = 0
-    request_json = flask.request.get_json()
+    request_json = flask.request.get_json(silent=True)
     if request_json is None:
         request_json = dict(flask.request.values)
     if req_rng and 'max' not in request_json:
@@ -137,23 +126,18 @@ def create_neural_network():
         elif not db_record_exists and update_request:
             update_request = False  # treat as a new network to create if no record currently exists
         try:
-            # create new network class object with provided params
             new_neural_network = NeuralNetwork(int(flask.request.args['input']),
                                                int(flask.request.args['hidden']),
                                                int(flask.request.args['output']),
                                                float(flask.request.args['learningrate']))
-            # setup metadata entry for tracking serialized file location via the db
             network_storage_document = {"network_id": flask.request.args['name'],
                                         "saved_data": "{0}/{1}_{2}_perceptron_network.bin".format(
                                             config_data['trained_networks_directory'],
                                             uuid.uuid1(),
                                             flask.request.args['name'])}
-            # load the newly generated network into the global cache for fast access (i.e. for training operations)
             perceptron_cache.add(network_storage_document['network_id'], (new_neural_network,
                                                                           network_storage_document['saved_data']))
-            # create a snapshot of the initialized class object and serialize it to the location given in the metadata
             io_helper.save_pretrained_network(new_neural_network, network_storage_document['saved_data'])
-            # save metadata entry to db
             if update_request:
                 # cleanup the old serialized object from disk, then replace its metadata entry as well
                 os.remove(perceptron_db.read_document({"network_id": flask.request.args['name']})["saved_data"])
@@ -186,7 +170,6 @@ def commit_network_training():
     resp = {'status': APIResponseStatus.OK.value}
     status_code = 200
     if "name" in flask.request.args:
-        # Remove cached instance and commit to file (if cached)
         if flask.request.args['name'] in perceptron_cache.keys():
             cached_network = perceptron_cache.pop(flask.request.args['name'])
             io_helper.save_pretrained_network(cached_network[0], cached_network[1])
@@ -216,12 +199,11 @@ def query_neural_network():
 
     :return: JSON response with either an "OK" status for training or a network response for queries
     """
-    # setup the response and validate the required arguments
     resp = {'status': APIResponseStatus.OK.value}
     status_code = 200
     required_args = {"name", "features"}
     training_request = 'train' in flask.request.url_rule.rule
-    request_json = flask.request.get_json()
+    request_json = flask.request.get_json(silent=True)
     if request_json is None:
         return {'status': APIResponseStatus.ERROR.value}, 400
     if training_request:
@@ -242,7 +224,7 @@ def query_neural_network():
             try:
                 # Based on the endpoint used, 'features' will either be used to query the network for a classification,
                 # or used to train the network towards a provided target class
-                inputs = numpy.asfarray(request_json['features'].strip(",").split(','))  # TODO: Improve parsing method
+                inputs = numpy.asarray(request_json['features'].strip(",").split(','), dtype=float)  # TODO: Improve parsing method
                 if training_request:  # Updates the internal network weights after the query is complete
                     target_class = int(request_json['target'])
                     perceptron_network.train(inputs, target_class)
@@ -250,7 +232,6 @@ def query_neural_network():
                     network_outputs = perceptron_network.query(inputs)
                     resp.update({"identified_class": int(numpy.argmax(network_outputs)),
                                  "raw_network_output": network_outputs.T.tolist()})
-                # Place recently queried network into cache (overwrite if already in cache)
                 perceptron_cache.add(request_json['name'], (perceptron_network, save_data_path))
             except ValueError:  # unexpected values were passed in the request, i.e. chars, additional punctuation, etc.
                 resp.update({'status': APIResponseStatus.VALUE_ERROR.value})
@@ -267,7 +248,6 @@ def query_neural_network():
 @app.route('/api/v1/perceptron/delete', methods=['GET', 'POST'])
 @cross_origin()
 def delete_neural_network():
-    # setup the response and validate the required arguments
     resp = {'status': APIResponseStatus.OK.value, "deleted_count": 0}
     status_code = 200
     required_args = {"name"}
@@ -288,7 +268,6 @@ def delete_neural_network():
     return resp, status_code
 
 
-# Optional debug endpoints for directly interacting with the backend database
 @app.route('/api/v1/perceptron/dbtest', methods=['GET', 'POST'])
 def api_db_check():
     if config_data['flask_enable_debug_endpoints']:

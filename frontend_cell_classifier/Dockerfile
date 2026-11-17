@@ -1,4 +1,4 @@
-FROM node:current-alpine
+FROM node:22-alpine
 WORKDIR /perceptron-react-app
 ENV PATH /perceptron-react-app/node_modules/.bin:$PATH
 COPY package.json .

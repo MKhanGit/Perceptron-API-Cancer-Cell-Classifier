@@ -15,11 +15,9 @@ class NeuralNetwork:
         self.inodes = input_nodes
         self.hnodes = hidden_nodes
         self.onodes = output_nodes
-        # Initialize weights and learning-rate between input-hidden and hidden-output layer interfaces
         self.wih = numpy.random.normal(0.0, pow(self.hnodes, -0.5), (self.hnodes, self.inodes))
         self.who = numpy.random.normal(0.0, pow(self.onodes, -0.5), (self.onodes, self.hnodes))
         self.lr = learning_rate
-        # activation function is the sigmoid function
         self.activation_function = lambda x: special.expit(x)
 
     def train(self, input_features, target_class):
@@ -31,7 +29,7 @@ class NeuralNetwork:
         :param target_class: the class index which is being represented by the feature values
         :return:
         """
-        inputs = numpy.asfarray(input_features)
+        inputs = numpy.asarray(input_features, dtype=float)
         targets = numpy.zeros(self.onodes) + 0.01
         targets[int(target_class)] = 0.99
         self._train(inputs, targets)
@@ -59,17 +57,12 @@ class NeuralNetwork:
         :param targets_list: (optional) if provided, the network is trained towards these targets for future queries
         :return:
         """
-        # convert inputs list to 2d array
         inputs = numpy.array(inputs_list, ndmin=2).T
 
-        # calculate signals into hidden layer
         hidden_inputs = numpy.dot(self.wih, inputs)
-        # calculate the signals emerging from hidden layer
         hidden_outputs = self.activation_function(hidden_inputs)
 
-        # calculate signals into final output layer
         final_inputs = numpy.dot(self.who, hidden_outputs)
-        # calculate the signals emerging from final output layer
         final_outputs = self.activation_function(final_inputs)
 
         if targets_list is not None:  # when given a targets list, the network trains towards those targets
@@ -101,58 +94,3 @@ class NeuralNetwork:
             self.inodes, self.hnodes, self.onodes, self.lr)
         return nstr
 
-
-class NetworkTester:
-    def __init__(self, training_data, testing_data, input_nodes, hidden_nodes, output_nodes, learning_rate):
-        """
-
-        :param training_data:
-        :param testing_data:
-        :param input_nodes:
-        :param hidden_nodes:
-        :param output_nodes:
-        :param learning_rate:
-        """
-        self.training_data = training_data
-        self.testing_data = testing_data
-        self.input_nodes = input_nodes
-        self.hidden_nodes = hidden_nodes
-        self.output_nodes = output_nodes
-        self.learning_rate = learning_rate
-
-        self.neural_network = NeuralNetwork(self.input_nodes, self.hidden_nodes, self.output_nodes, self.learning_rate)
-        self.__train_all_records__()
-
-    def __train_all_records__(self):
-        for record in self.training_data:
-            self.__train_one_record__(record[0], record[1])
-
-    def __train_one_record__(self, inputs_list, target_class):
-        inputs = numpy.asfarray(inputs_list)
-        targets = numpy.zeros(self.output_nodes) + 0.01
-        targets[int(target_class)] = 0.99
-        self.neural_network.train(inputs, targets)
-
-    def update_network(self, inputs_list, target_class):
-        """
-        Apply a training record into the network
-        :param inputs_list:
-        :param target_class:
-        :return:
-        """
-        self.__train_one_record__(inputs_list, target_class)
-
-    def test(self):
-        _total = 0
-        _pass = 0
-
-        for record in self.testing_data:
-            print("Testing Record: {0} ...".format(record[0]), end=" ")
-            if int(record[1]) == numpy.argmax(self.neural_network.query(numpy.asfarray(record[0]))):
-                print("\t\t !!PASSED!! ", end=" ")
-                _pass += 1
-            else:
-                print("\t\t ==FAILED== ", end=" ")
-            print(" ({0})".format("Malignant" if int(record[1]) else "Benign"))
-            _total += 1
-        return float(_pass)/_total
