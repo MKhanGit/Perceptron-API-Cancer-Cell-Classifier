@@ -242,7 +242,7 @@ def query_neural_network():
             try:
                 # Based on the endpoint used, 'features' will either be used to query the network for a classification,
                 # or used to train the network towards a provided target class
-                inputs = numpy.asfarray(request_json['features'].strip(",").split(','))  # TODO: Improve parsing method
+                inputs = numpy.asarray(request_json['features'].strip(",").split(','), dtype=float)  # TODO: Improve parsing method
                 if training_request:  # Updates the internal network weights after the query is complete
                     target_class = int(request_json['target'])
                     perceptron_network.train(inputs, target_class)

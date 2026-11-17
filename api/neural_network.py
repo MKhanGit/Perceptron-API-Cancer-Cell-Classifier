@@ -31,7 +31,7 @@ class NeuralNetwork:
         :param target_class: the class index which is being represented by the feature values
         :return:
         """
-        inputs = numpy.asfarray(input_features)
+        inputs = numpy.asarray(input_features, dtype=float)
         targets = numpy.zeros(self.onodes) + 0.01
         targets[int(target_class)] = 0.99
         self._train(inputs, targets)
@@ -128,7 +128,7 @@ class NetworkTester:
             self.__train_one_record__(record[0], record[1])
 
     def __train_one_record__(self, inputs_list, target_class):
-        inputs = numpy.asfarray(inputs_list)
+        inputs = numpy.asarray(inputs_list, dtype=float)
         targets = numpy.zeros(self.output_nodes) + 0.01
         targets[int(target_class)] = 0.99
         self.neural_network.train(inputs, targets)
@@ -148,7 +148,7 @@ class NetworkTester:
 
         for record in self.testing_data:
             print("Testing Record: {0} ...".format(record[0]), end=" ")
-            if int(record[1]) == numpy.argmax(self.neural_network.query(numpy.asfarray(record[0]))):
+            if int(record[1]) == numpy.argmax(self.neural_network.query(numpy.asarray(record[0], dtype=float))):
                 print("\t\t !!PASSED!! ", end=" ")
                 _pass += 1
             else:

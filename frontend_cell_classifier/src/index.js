@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import {createRoot} from 'react-dom/client';
 import './index.css';
 import configData from "./app-config.json"
 import {AppInfoP1, AppInfoP2} from "./appInfo";
@@ -346,7 +346,6 @@ class MachineLearningApp extends React.Component {
     }
 }
 
-ReactDOM.render(
-    <MachineLearningApp/>,
-    document.getElementById('root')
+createRoot(document.getElementById('root')).render(
+    <MachineLearningApp/>
 );

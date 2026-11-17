@@ -29,14 +29,14 @@ The entire project is dockerized into three discrete containers and can be deplo
 
 ### Requirements
  * Docker Engine
- * Docker-Compose (usually included with engine)
+ * Docker Compose v2 (the `docker compose` plugin, included with current Docker Engine / Docker Desktop)
  * Ports `3000`, `27017`, and `5000` are available/unbound (or choose custom ports in `docker-compose.yml`)
 
-If you wish to deploy the project with all default settings/values, you can simply run `docker-compose` with the provided yaml file in the repository root:
+If you wish to deploy the project with all default settings/values, you can simply run `docker compose` with the provided yaml file in the repository root:
 
 ```
-docker-compose build
-docker-compose up
+docker compose build
+docker compose up
 ```
 Note: `build` command is only required when you make changes to the source code or docker configs
 

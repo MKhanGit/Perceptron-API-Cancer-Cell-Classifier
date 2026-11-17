@@ -116,7 +116,7 @@ def test_network_db(neural_network):
         total_tests += 1
         features = [testing_record[str(i)] for i in range(config_data['sample_network_input_nodes'])]
         target_class = int(testing_record['target_class'])
-        network_outputs = neural_network.query(numpy.asfarray(features))
+        network_outputs = neural_network.query(numpy.asarray(features, dtype=float))
         if numpy.argmax(network_outputs) == target_class:
             passed_tests += 1
     return (float(passed_tests) / total_tests) * 100, total_tests
