@@ -23,6 +23,7 @@ def api_db_check(records_db, args):
 
 
 def mongo_db_read_documents(records_db, perceptron_db, args):
+    args = dict(args)
     resp = records_db.read_documents(args)
     records = []
     for record in resp:

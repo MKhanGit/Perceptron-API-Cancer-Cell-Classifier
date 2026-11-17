@@ -18,9 +18,6 @@ class DBConnection:
     def write_document(self, document):
         return self.collection.insert_one(document).inserted_id
 
-    def write_documents(self, documents):
-        return self.collection.insert_many(documents).inserted_ids
-
     def read_document(self, match):
         return self.collection.find_one(match)
 
@@ -35,6 +32,3 @@ class DBConnection:
 
     def update_document(self, match, update):
         return self.collection.update_one(match, {"$set": update}).modified_count
-
-    def replace_document(self, match):
-        return self.collection.find_one_and_replace(match)

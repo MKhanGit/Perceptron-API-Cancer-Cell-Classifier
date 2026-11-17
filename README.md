@@ -1,94 +1,187 @@
 # Perceptron API: Machine Learning Cancer Cell Classifier
 
-This application is a full-stack microservice solution demonstrating the deployment of a machine learning neural network wrapped into a RESTful API service, accessed with a React.js frontend app. 
+A full-stack microservice demo: a machine learning neural network wrapped in a RESTful API and accessed through a React.js frontend.
 
-The backend is a custom python module which implements the Perceptron Model for machine learning, providing access to the data class via API endpoints on a flask server. The application is accessed through a React.js frontend implementing a testing "sandbox" application, allowing users to query the backend neural network and receive classification outputs (i.e. Benign vs Malignant).
+The backend is a custom Python module implementing the Perceptron model, exposed through endpoints on a Flask server. The React.js frontend is a testing "sandbox" which lets users query the neural network and receive a classification (Benign vs Malignant).
 
-In this sample deployment of the API (Breast Cancer Classifier), the Perceptron Network is trained on ~700 records of cell measurements to produce a classifier which can distinguish between malignant and benign cancer cells with ~95% accuracy. Prior to deployment, the system also re-trains the network over several iterations (default=10) to maximize the accuracy against a set of optimizaiton records.
+In the sample deployment (Breast Cancer Classifier), the network is trained on ~700 records of cell measurements to distinguish malignant from benign cells with ~95% accuracy. On startup the system re-trains the network several times (default=10) and keeps the most accurate version.
 
-The entire project is dockerized into three discrete containers and can be deployed using the below steps under *"Build / Deploy Instructions"*
+The project is split into three Docker containers: a MongoDB database, the Flask API and the React frontend.
 
-### Key  Features
- * "Raw Python" implementation of the Perpcetron learning model (i.e. no ML frameworks used)
+### Key Features
+ * "Raw Python" implementation of the Perceptron learning model (no ML frameworks used)
  * RESTful API endpoints for managing individual models: create, train, query, update, delete
- * Custom internal caching system (similar to LRU cache) for limiting disk reads/writes and database calls
+ * Custom internal caching system (similar to an LRU cache) limiting disk reads/writes and database calls
  * Containerized ecosystem for easy deployment/development
- * Sample Data/Models for Breast Cancer Classification
- * Sample Interactive React.js frontend for testing pre-trained ML models
+ * Sample data and a pre-trained model for Breast Cancer classification
+ * Sample interactive React.js frontend for testing pre-trained ML models
  * MongoDB for managing training records, testing records and metadata for pre-trained networks
 
-
-#### Planned Features
+### Planned Features
  * Improve training optimization
- * Add functionality for custom user-spaces & authentications
+ * Add functionality for custom user-spaces & authentication
  * Implement additional machine learning models
  * Enable bulk training via frontend interface
 
 -----
-## Build / Deploy Instructions
+## Quick Start (Docker Compose)
+
+This works the same on Linux, macOS and Windows.
 
 ### Requirements
- * Docker Engine
- * Docker Compose v2 (the `docker compose` plugin, included with current Docker Engine / Docker Desktop)
- * Ports `3000`, `27017`, and `5000` are available/unbound (or choose custom ports in `docker-compose.yml`)
+ * [Docker Engine](https://docs.docker.com/engine/install/) or Docker Desktop, with **Docker Compose v2** (the `docker compose` command, included with current Docker installs). Check with `docker compose version`.
+ * Internet access on the first build (to pull base images and install dependencies).
+ * Ports `3000`, `5000` and `27017` free on the host (or change the left-hand side of the `ports:` mappings in `docker-compose.yml`).
+ * A CPU supported by MongoDB 8 (x86-64 with AVX, or ARM64 with ARMv8.2-A). On older hardware, pick an older tag in `db/Dockerfile` (e.g. `mongo:4.4`).
 
-If you wish to deploy the project with all default settings/values, you can simply run `docker compose` with the provided yaml file in the repository root:
+### Run
+
+From the repository root:
 
 ```
-docker compose build
-docker compose up
+docker compose up --build
 ```
-Note: `build` command is only required when you make changes to the source code or docker configs
 
-After the images are built, and the containers are running, you can access the containers with the following endpoints: 
- - React.js Frontend App: `http://localhost:3000`
- - MonoDB database: `mongodb://localhost:27017`
- - RESTful API backend: `http://localhost:5000/api/v1/perceptron`
+Add `-d` to run in the background. Re-run with `--build` whenever you change source code or Docker configuration.
 
+On the first start the API loads the sample records into MongoDB and trains the sample network. Wait until the API log prints a line like:
+
+```
+[Breast Cancer Classifier] After 10 training iterations on 667 records, deploying Sample Network with 100.00% Accuracy...
+```
+
+The frontend dev server also needs a short moment to compile on its first start. Then open:
+
+| Service | URL |
+|---|---|
+| React.js frontend | http://localhost:3000 |
+| REST API | http://localhost:5000/api/v1/perceptron |
+| MongoDB | `mongodb://localhost:27017` |
+
+Check that the API is up (it should return `{"status": "OK"}`):
+
+```
+curl http://localhost:5000/api/v1/perceptron
+```
+
+### Stop / Reset
+```
+docker compose down       # stop and remove containers (keeps the database and trained networks)
+docker compose down -v    # also delete the stored database, trained networks and node_modules volumes
+```
+
+### Deploying on another machine or a server
+The frontend runs in your browser and calls the API at **the same hostname it was loaded from, on port 5000** (`http://<hostname>:5000`, see `frontend_cell_classifier/src/app-config.json`). So to deploy remotely:
+ 1. Clone the repository on the server and run `docker compose up -d --build`.
+ 2. Make ports `3000` and `5000` reachable from the browsers that will use the app (firewall/security group). Port `27017` does not need to be exposed; remove its `ports:` entry in `docker-compose.yml` to keep the database private.
+ 3. Browse to `http://<server-address>:3000`.
+
+If you serve the API on a different port or behind a reverse proxy, update `PERCEPTRON_API_ENDPOINT` (and `PERCEPTRON_API_PROTOCOL`) in `frontend_cell_classifier/src/app-config.json`, then rebuild.
+
+_Note: the services run the React and Flask development servers, which are intended for demos and development. Put a hardened reverse proxy in front of them (or swap in production servers) before exposing them to the public internet. The API currently has no authentication._
 
 -----
-## Advanced/Custom Build Instructions
-**It is recommended to start with the `docker-compose.yml` deployment provided in the project.**
+## Configuration
 
-If you instead wish to manually set up the containers or do other advanced/custom settings for deployment, see below.
+**API** (`api/config.json`):
 
-_Before Starting:
-Creating a custom docker network is optional, but highly recommended as otherwise you will need to manually ensure that your endpoint routing between containers is properly setup for all containers (by editing each component's config)_
+| Key | Purpose |
+|---|---|
+| `flask_host`, `flask_port` | Address the Flask server binds to |
+| `flask_cache_max_size` | Number of networks held in the in-memory cache |
+| `flask_enable_debug_endpoints` | Enables the raw database read/write/delete debug endpoints (keep `false` outside of development) |
+| `mongo_host`, `mongo_port`, `mongo_database` | MongoDB connection |
+| `data_collection`, `metadata_collection` | Mongo collections for records and network metadata |
+| `trained_networks_directory` | Where serialized networks are written |
+| `load_sample_network_on_start` | Load the sample data and train the sample network at startup |
+| `sample_*` | Sample network name, file, layer sizes, learning rate, CSV data files and training iterations |
 
-The following instructions will allow you to deploy the service using the default values provided in `config.json`:
+The defaults assume the static addresses set in `docker-compose.yml` (`172.15.0.2` for MongoDB, `172.15.0.3` for the API). If you change those, update `flask_host` and `mongo_host` to match.
 
+**Frontend** (`frontend_cell_classifier/src/app-config.json`): API protocol/endpoint, the name of the network to query and the number of samples displayed.
 
-1) Create a custom docker network with a user defined subnet, which all contianers will be attached to when run.
+### API Endpoints
+All endpoints live under `/api/v1/perceptron` and accept `GET` or `POST`.
+
+| Endpoint | Description |
+|---|---|
+| `/` | Health check |
+| `/records`, `/records/random` | Query stored records (`random` also requires `max`) |
+| `/metadata` | List the stored networks |
+| `/create`, `/update` | Create or replace a network (`name`, `input`, `hidden`, `output`, `learningrate` as query args) |
+| `/query` | Classify a feature list (JSON body: `name`, `features`) |
+| `/train` | Train a network on one record (JSON body: `name`, `features`, `target`) |
+| `/commit` | Write a cached network's training to disk (`name`) |
+| `/delete` | Delete a network (`name`) |
+
+-----
+## Running Without Docker Compose
+
+### Individual Docker containers
+Use this if you want to start the containers by hand. The default `config.json` expects the static addresses below.
+
+1) Create a custom network with a user defined subnet:
 ```
 docker network create --subnet=172.15.0.0/16 api-net
 ```
 
-2) Build the Monogo DB Server using the Dockerfile under `./db/` and Run it on the custom network:
-
+2) Build and run MongoDB first, and give it a few seconds to start (the API exits if the database is unreachable when it starts):
 ```
 docker build -t perceptron-db-mongo ./db/
-docker run -p 27017:27017 --network="api-net" --ip="172.15.0.2" perceptron-db-mongo
+docker run -d -p 27017:27017 --network api-net --ip 172.15.0.2 perceptron-db-mongo
 ```
-_**Note**: Make sure the ip you bind this container to matches the `mongo_host` field in the `config.json`, otherwise the REST API container will **not be able to access** the monogo DB container._
 
-3) Build the REST API Server using the Dockerfile under `./api/` and Run it on the custom network:
+3) Build and run the API:
 ```
 docker build -t perceptron-api-flask ./api/
-docker run -p 5000:5000 --network="api-net" --ip="172.15.0.3" perceptron-api-flask
+docker run -d -p 5000:5000 --network api-net --ip 172.15.0.3 perceptron-api-flask
 ```
 
-4) Build the React Frontend using the Dockerfile under `./frontend/` and Run it on the custom network:
+4) Build and run the frontend:
 ```
 docker build -t perceptron-react-frontend ./frontend_cell_classifier/
-docker run -p 3000:3000 --network="api-net" --ip="172.16.0.4" perceptron-react-frontend
+docker run -d -p 3000:3000 --network api-net --ip 172.15.0.4 perceptron-react-frontend
 ```
+
+_The `--ip` of the database must match `mongo_host` in `api/config.json`, otherwise the API cannot reach MongoDB._
+
+### Local development (no containers for the app)
+Requires Python 3.13+, Node.js 22+ and a MongoDB instance (e.g. `docker run -d -p 27017:27017 mongo:8.0`).
+
+API:
+```
+cd api
+python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+mkdir -p bin
+```
+Edit `api/config.json` so `flask_host` is `127.0.0.1` and `mongo_host` is `localhost`, then:
+```
+python perceptron_api.py
+```
+
+Frontend (in another terminal):
+```
+cd frontend_cell_classifier
+npm install
+npm start
+```
+The app opens at http://localhost:3000.
+
+### Tests
+The API unit tests (cache system) need no database:
+```
+cd api
+python -m unittest unittests.cache_tests
+```
+Or inside the running stack: `docker compose exec perceptron-api-flask python3 -m unittest unittests.cache_tests`.
 
 -----
 ## Sample Data References
 
 ### Breast Cancer Cell Data
 
-Note: While the original attribute information is provided below, the records provided under `./api/sample_data` are normalized, and the target class is instead mappped as `0 -> benigign` and `1 -> malignant`. Additionally, the sample code number was dropped.
+Note: While the original attribute information is provided below, the records provided under `./api/sample_data` are normalized, and the target class is instead mapped as `0 -> benign` and `1 -> malignant`. Additionally, the sample code number was dropped.
 
 #### Attribute Information
 ```
@@ -118,7 +211,7 @@ Group 6: 49 instances (Updated January 1991)
 Group 7: 31 instances (June 1991) 
 Group 8: 86 instances (November 1991) 
 ----------------------------------------- 
-Total: 699 points (as of the donated datbase on 15 July 1992) 
+Total: 699 points (as of the donated database on 15 July 1992) 
 ```
 Note that the results summarized above in Past Usage refer to a dataset of size 369, while Group 1 has only 367 instances. This is because it originally contained 369 instances; 2 were removed. The following statements summarizes changes to the original Group 1's set of data: 
 

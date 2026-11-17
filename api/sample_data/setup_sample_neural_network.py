@@ -39,9 +39,6 @@ def main(timeout=20):
             record_count, trained_network = train_network_db()
             pass_rate, test_count = test_network_db(trained_network)
             trained_networks.append((trained_network, pass_rate))
-            # print("[Breast Cancer Classifier] Sample Neural Network trained on {0} records ...".format(record_count))
-            # print("[Breast Cancer Classifier] Sample Neural Network tested on "
-            #       "{1} records with {0:.2f}% PassRate!".format(pass_rate, test_count))
         trained_networks.sort(key=lambda x: x[1], reverse=True)
         print("[Breast Cancer Classifier] After {0} training iterations on {1} records, "
               "deploying Sample Network with {2:.2f}% Accuracy...".format(config_data['sample_training_iterations'],
@@ -51,8 +48,6 @@ def main(timeout=20):
 
 
 def write_data_db():
-    # Write sample data to Mongo DB (if not previously loaded)
-    # Training Records
     with open(config_data["sample_network_training_data_csv"]) as csvfile:
         csv_rows = csv.reader(csvfile)
         for i, row in enumerate(csv_rows):
@@ -65,7 +60,6 @@ def write_data_db():
             document.update(features)
             document.update(target)
             mongo_db.write_document(document)
-    # Testing Records
     with open(config_data["sample_network_testing_data_csv"]) as csvfile:
         csv_rows = csv.reader(csvfile)
         for i, row in enumerate(csv_rows):

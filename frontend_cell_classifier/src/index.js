@@ -135,7 +135,6 @@ class Sample extends React.Component {
         let sampleClass = Array(3).fill("");
 
         sampleClass[0] = 'sample';
-        // sampleClass[1] = this.props.sample[configData.FEATURES.length] === "1" ? "malignant" : (this.props.sample[configData.FEATURES.length] === "0" ? "benign" : "loading");
         let sampleTarget = this.props.sample[configData.FEATURES.length] === "1" ? "malignant" : (this.props.sample[configData.FEATURES.length] === "0" ? "benign" : "loading");
         let sampleHeadingClass;
         let sampleCorrect;
@@ -165,7 +164,6 @@ class Sample extends React.Component {
         }
         sampleCorrect = (this.props.state.responseIsCorrect[this.props.index] !==null) ? ( (this.props.state.responseIsCorrect[this.props.index]) ? " \u2713 " : " \u2716 ") : " \xa0 ";
         sampleCorrectClass = (this.props.state.responseIsCorrect[this.props.index] !==null) ? ( (this.props.state.responseIsCorrect[this.props.index]) ? "benign" : "malignant") : "";
-        console.log(this.props.state.responseIsCorrect[this.props.index]);
         return (
             <button className={sampleClass.join(' ')} onClick={() => this.props.onClick(this.props.index)}>
                 <div className={"sample-heading ".concat(sampleHeadingClass)}>
@@ -275,7 +273,6 @@ class MachineLearningApp extends React.Component {
     }
 
     submitClick() {
-        // Given a valid selection/load state, ping the API with the selected data and receive a response
         if (!this.state.loadingSamples && !this.state.loadingResponse && this.state.selectedSample !== null && !this.state.finished) {
             this.setState({loadingResponse: true});
             setTimeout(() => {
@@ -303,14 +300,12 @@ class MachineLearningApp extends React.Component {
             });
         }
         if (!this.state.finished) {
-            // Stage API request with selected features
             this.setState({
                 selectedSample: this.state.selectedSample === i ? null : i,
                 featuresRequest: features,
                 targetResponse: null
             });
         } else {
-            // Soft reset the board state, allowing for another sample to the be tested
             this.setState({selectedSample: i, featuresRequest: features, targetResponse: null,  lastResponseData: null, finished: false});
         }
     }
@@ -319,7 +314,6 @@ class MachineLearningApp extends React.Component {
         if(this.state.loadingResponse || this.state.loadingSamples ){
             return null;
         }
-        // Set the App into a loading state and request a new random sample set from the database via an API call
         this.setState({loadingSamples: true, loadingResponse: true, selectedSample: null, lastResponseData: null, responseIsCorrect: Array(configData.SAMPLES_RETRIEVED).fill(null)});
         loadSamplesToState(this);
     }

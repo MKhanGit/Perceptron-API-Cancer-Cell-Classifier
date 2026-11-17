@@ -6,20 +6,13 @@ The user can select any random "measurement card" and query the API with those m
 
 The app provides clear output classifications from the API (Benign vs Malignant), as well as showing "Raw Network Outputs" corresponding to the AI confidence for each classification.
 
-## Screenshots
-_under construction_
-## Deployment 
-Since this project is designed as an ecosystem of micro-services, it would be easiest to run `docker-compose` from the project/repository root:
+## Deployment
+This app is one part of a three-service stack. The easiest way to run it is `docker compose up --build` from the repository root; see the main [README](../README.md) for requirements, ports and configuration.
+
+To run only the frontend (the API must be reachable at `http://<this hostname>:5000`, see `src/app-config.json`):
 
 ```
-docker-compose build
-docker-compose up
+npm install
+npm start        # development server on http://localhost:3000
+npm run build    # production build into ./build
 ```
-
-This will build and deploy all three components of the project: Backend DB, Backend API, Frontend React.js App.
-
-## Advanced Deployment / Debugging
-
-If you do not wish to run the stack with the default configuration, you can run custom deployments for each service.
-
-For this React.js application, you can enter the `./frontend_cell_classifier` directory and build the micro-service via the `Dockerfile` or run the `npm start`/`npm run build` commands if you have Node.js and npm installed.

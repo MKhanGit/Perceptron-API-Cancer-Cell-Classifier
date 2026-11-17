@@ -1,6 +1,5 @@
 import json
 import dill
-import csv
 from neural_network import NeuralNetwork
 
 
@@ -45,17 +44,3 @@ def load_pretrained_network(inputfile):
         else:  # object loaded from file was not a `NeuralNetwork` class object
             return None
 
-
-def read_data_csv(csvfile):
-    """
-    Returns a list of tuples of the format ([features], target) from a CSV file, where the class is given by column "n"
-    and the [features] list is given by columns ["0", "1", ... "n-1"].
-
-    :param csvfile: path to a csv file containg feature/target values
-    :return: a list of tuples of the format ([features], target)
-    """
-    segmented_data = list()
-    with open(csvfile, 'r') as csvfh:
-        for row in csv.reader(csvfh):
-            segmented_data.append((row[:-1], row[-1]))
-        return segmented_data
